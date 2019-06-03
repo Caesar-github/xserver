@@ -251,10 +251,7 @@ glamor_destroy_pixmap(PixmapPtr pixmap)
 void
 glamor_block_handler(ScreenPtr screen)
 {
-    glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
-
-    glamor_make_current(glamor_priv);
-    glFlush();
+    glamor_flush(screen);
 }
 
 static void
@@ -262,8 +259,7 @@ _glamor_block_handler(ScreenPtr screen, void *timeout)
 {
     glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
 
-    glamor_make_current(glamor_priv);
-    glFlush();
+    glamor_flush(screen);
 
     screen->BlockHandler = glamor_priv->saved_procs.block_handler;
     screen->BlockHandler(screen, timeout);
@@ -935,4 +931,27 @@ glamor_finish(ScreenPtr screen)
 
     glamor_make_current(glamor_priv);
     glFinish();
+}
+
+void
+glamor_flush(ScreenPtr screen)
+{
+    glamor_screen_private *glamor_priv = glamor_get_screen_private(screen);
+
+    glamor_make_current(glamor_priv);
+
+    if (glamor_priv->is_gles) {
+#ifdef GLAMOR_HAS_GL_FENCE
+        GLsync sync;
+
+        sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        glFlush();
+        glWaitSync(sync, 0, GL_TIMEOUT_IGNORED);
+        glDeleteSync(sync);
+#else
+        glFinish();
+#endif
+    } else {
+        glFlush();
+    }
 }
