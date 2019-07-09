@@ -41,6 +41,12 @@ glamor_put_image_gl(DrawablePtr drawable, GCPtr gc, int depth, int x, int y,
     BoxRec      box;
     int         off_x, off_y;
 
+#ifdef GLAMOR_HAS_GBM_MAP
+    /* HACK for freerdp */
+    if (w == 64 && h == 64)
+        return FALSE;
+#endif
+
     pixmap_priv = glamor_get_pixmap_private(pixmap);
 
     if (!GLAMOR_PIXMAP_PRIV_HAS_FBO(pixmap_priv))
