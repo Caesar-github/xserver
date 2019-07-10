@@ -349,6 +349,7 @@ typedef struct glamor_pixmap_private {
     Bool bo_mapped;
     void *map_data;
     Bool exporting;
+    Bool prefer_bail;
 #endif
     /** block width of this large pixmap. */
     int block_w;

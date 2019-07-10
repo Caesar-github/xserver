@@ -171,7 +171,12 @@ glamor_fill_spans(DrawablePtr drawable,
                   GCPtr gc,
                   int n, DDXPointPtr points, int *widths, int sorted)
 {
-    if (glamor_fill_spans_gl(drawable, gc, n, points, widths, sorted))
+    PixmapPtr pixmap = glamor_get_drawable_pixmap(drawable);
+    glamor_pixmap_private *pixmap_priv;
+
+    pixmap_priv = glamor_get_pixmap_private(pixmap);
+    if (!pixmap_priv->prefer_bail &&
+        glamor_fill_spans_gl(drawable, gc, n, points, widths, sorted))
         return;
     glamor_fill_spans_bail(drawable, gc, n, points, widths, sorted);
 }

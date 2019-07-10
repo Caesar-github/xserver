@@ -110,6 +110,27 @@ glamor_link_glsl_prog(ScreenPtr screen, GLint prog, const char *format, ...)
     }
 }
 
+/* HACK for gtkperf, prefer bail functions for small arcs */
+#ifdef GLAMOR_HAS_GBM_MAP
+static void
+glamor_poly_fill_arc(DrawablePtr pDraw, GCPtr pGC, int narcs_all, xArc * parcs)
+{
+    PixmapPtr pixmap = glamor_get_drawable_pixmap(pDraw);
+    glamor_pixmap_private *pixmap_priv;
+    int i;
+
+    pixmap_priv = glamor_get_pixmap_private(pixmap);
+    pixmap_priv->prefer_bail = TRUE;
+    for (i = 0; i < narcs_all; i++) {
+        if (parcs->width > 256 || parcs->height > 256)
+            pixmap_priv->prefer_bail = FALSE;
+    }
+    miPolyFillArc(pDraw, pGC, narcs_all, parcs);
+    pixmap_priv->prefer_bail = FALSE;
+}
+#else
+#define glamor_poly_fill_arc miPolyFillArc
+#endif
 
 static GCOps glamor_gc_ops = {
     .FillSpans = glamor_fill_spans,
@@ -124,7 +145,7 @@ static GCOps glamor_gc_ops = {
     .PolyArc = miPolyArc,
     .FillPolygon = miFillPolygon,
     .PolyFillRect = glamor_poly_fill_rect,
-    .PolyFillArc = miPolyFillArc,
+    .PolyFillArc = glamor_poly_fill_arc,
     .PolyText8 = glamor_poly_text8,
     .PolyText16 = glamor_poly_text16,
     .ImageText8 = glamor_image_text8,
